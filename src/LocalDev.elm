@@ -41,6 +41,9 @@ update msg ( fem, bem ) =
             let
                 ( nfem, fcmd ) =
                     Frontend.app.update frontendMsg fem
+
+                _ =
+                    Debug.log "FEMsg" frontendMsg
             in
             ( ( nfem, bem ), Cmd.map FEMsg fcmd )
 
@@ -48,6 +51,9 @@ update msg ( fem, bem ) =
             let
                 ( nbem, bcmd ) =
                     Backend.app.update backendMsg bem
+
+                _ =
+                    Debug.log "BEMsg" backendMsg
             in
             ( ( fem, nbem ), Cmd.map BEMsg bcmd )
 
