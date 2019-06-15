@@ -77,8 +77,8 @@ updateFromFrontend clientId msg model =
             ( { model | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players }, sendGameStates model.players )
 
 
-sendGameStates clients =
-    clients
+sendGameStates players =
+    players
         |> Dict.toList
         |> List.map (\( clientId, player ) -> sendToFrontend clientId (Verdict player.gameState))
         |> Cmd.batch
