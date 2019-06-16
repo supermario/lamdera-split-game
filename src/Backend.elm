@@ -51,7 +51,12 @@ updateFromFrontend clientId msg model =
     in
     case Debug.log "updateFromFrontend" msg of
         ClientJoined ->
-            ( { model | clients = Set.insert clientId model.clients }, Cmd.none )
+            ( { model
+                | clients = Set.insert clientId model.clients
+                , players = Dict.insert clientId newPlayerState model.players
+              }
+            , Cmd.none
+            )
 
         ClientChoiceMade choice ->
             ( { model
