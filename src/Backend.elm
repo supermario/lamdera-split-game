@@ -76,10 +76,18 @@ updateFromFrontend clientId msg model =
             )
 
         ClientAdminRestartGame ->
-            ( { model | players = Dict.map (\k v -> newPlayerState) model.players }, sendGameStates model.players )
+            let
+                newModel =
+                    { model | players = Dict.map (\k v -> newPlayerState) model.players }
+            in
+            ( newModel, sendGameStates newModel.players )
 
         ClientAdminStartGame ->
-            ( { model | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players }, sendGameStates model.players )
+            let
+                newModel =
+                    { model | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players }
+            in
+            ( newModel, sendGameStates newModel.players )
 
 
 sendGameStates players =

@@ -89,7 +89,7 @@ gameView model =
                             [ style "width" "400px"
                             , style "height" "200px"
                             , style "position" "relative"
-                            , style "background-color" "red"
+                            , style "background-color" "blue"
                             , onClick (ChoiceMade Blue)
                             ]
                             [ Html.text "Blue" ]
@@ -106,7 +106,6 @@ gameView model =
 
                               else
                                 style "background-color" "grey"
-                            , onClick (ChoiceMade Red)
                             ]
                             [ Html.text "Red" ]
                         , Html.div
@@ -118,7 +117,6 @@ gameView model =
 
                               else
                                 style "background-color" "grey"
-                            , onClick (ChoiceMade Blue)
                             ]
                             [ Html.text "Blue" ]
                         ]
