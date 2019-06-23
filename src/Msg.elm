@@ -1,15 +1,22 @@
-module Msg exposing (BackendMsg(..), Choice(..), FrontendMsg(..), GameState(..), Player, RoundNumber, ToBackend(..), ToFrontend(..))
+module Msg exposing (BackendMsg(..), Choice(..), FrontendMsg(..), GameState(..), Page(..), Player, RoundNumber, ToBackend(..), ToFrontend(..), choiceFromString, choiceToString, pageToPath, pathToPage)
 
+import Browser exposing (..)
+import Browser.Navigation as Nav exposing (Key)
 import Dict exposing (..)
 import Json.Decode
 import Json.Encode
 import Lamdera.Types exposing (ClientId, WsError)
+import Url exposing (Url)
 
 
 type FrontendMsg
-    = ChoiceMade Choice
+    = OpenedPage Page
+    | UrlClicked UrlRequest
+    | UrlChanged Url
+    | ChoiceMade Choice
     | AdminRestartGame
     | AdminStartGame
+    | AdminEndRound
     | FNoop
 
 
@@ -18,6 +25,7 @@ type ToBackend
     | ClientChoiceMade Choice
     | ClientAdminRestartGame
     | ClientAdminStartGame
+    | ClientAdminEndRound
 
 
 type BackendMsg
@@ -32,6 +40,29 @@ type ToFrontend
 type Choice
     = Red
     | Blue
+
+
+choiceToString : Choice -> String
+choiceToString choice =
+    case choice of
+        Red ->
+            "Red"
+
+        Blue ->
+            "Blue"
+
+
+choiceFromString : String -> Choice
+choiceFromString str =
+    case str of
+        "Red" ->
+            Red
+
+        "Blue" ->
+            Blue
+
+        _ ->
+            Red
 
 
 type GameState
@@ -49,3 +80,28 @@ type alias RoundNumber =
 type alias Player =
     { gameState : GameState
     }
+
+
+type Page
+    = Home
+    | Admin
+
+
+pageToPath : Page -> String
+pageToPath page =
+    case page of
+        Home ->
+            "/"
+
+        Admin ->
+            "/admin"
+
+
+pathToPage : Url -> Page
+pathToPage url =
+    [ ( "/", Home )
+    , ( "/admin", Admin )
+    ]
+        |> Dict.fromList
+        |> Dict.get url.path
+        |> Maybe.withDefault Home

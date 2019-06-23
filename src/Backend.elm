@@ -3,6 +3,7 @@ module Backend exposing (Model, app)
 import Dict exposing (..)
 import Lamdera.Backend
 import Lamdera.Types exposing (..)
+import List.Extra as List
 import Msg exposing (..)
 import Set exposing (Set, map)
 import Task
@@ -88,6 +89,64 @@ updateFromFrontend clientId msg model =
                     { model | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players }
             in
             ( newModel, sendGameStates newModel.players )
+
+        ClientAdminEndRound ->
+            let
+                majority =
+                    Red
+
+                highestResult =
+                    model.players
+                        |> Dict.foldl
+                            (\k player dict ->
+                                case player.gameState of
+                                    Active (Just choice) ->
+                                        Dict.update (choiceToString choice)
+                                            (\mCount ->
+                                                case mCount of
+                                                    Just count ->
+                                                        Just <| count + 1
+
+                                                    Nothing ->
+                                                        Just 1
+                                            )
+                                            dict
+
+                                    _ ->
+                                        dict
+                            )
+                            Dict.empty
+                        |> Dict.toList
+                        |> List.maximumBy (\( attr, count ) -> count)
+
+                newModel =
+                    case highestResult of
+                        Just ( highestSeenChoice, groupedDictCount ) ->
+                            { model
+                                | players =
+                                    Dict.map
+                                        (\k player ->
+                                            case player.gameState of
+                                                Active (Just choice) ->
+                                                    if choice /= choiceFromString highestSeenChoice then
+                                                        { gameState = DroppedOut 123 }
+                                                        -- @TODO fix me with round numbers
+
+                                                    else
+                                                        -- User made it through – reset their color
+                                                        { gameState = Active Nothing }
+
+                                                _ ->
+                                                    player
+                                        )
+                                        model.players
+                            }
+
+                        Nothing ->
+                            -- @TODO what does this mean? A draw? What do we do about it?
+                            model
+            in
+            ( model, Cmd.none )
 
 
 sendGameStates players =

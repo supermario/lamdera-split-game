@@ -1,7 +1,9 @@
 module Frontend exposing (Model, app, subscriptions)
 
-import Browser.Dom as Dom
+import Browser exposing (..)
+import Browser.Dom
 import Browser.Events as Keyboard
+import Browser.Navigation as Nav exposing (Key)
 import Debug exposing (toString)
 import Dict exposing (..)
 import Html exposing (Html, input, text)
@@ -12,6 +14,7 @@ import Lamdera.Frontend
 import Lamdera.Types exposing (..)
 import Msg exposing (..)
 import Task
+import Url exposing (Url)
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
@@ -22,7 +25,7 @@ additional update function; updateFromBackend.
 -}
 app =
     Lamdera.Frontend.application
-        { init = \_ _ -> init
+        { init = init
         , update = update
         , updateFromBackend = updateFromBackend
         , view =
@@ -42,22 +45,37 @@ subscriptions model =
 
 
 type alias Model =
-    { gameState : GameState
+    { key : Key
+    , currentPage : Page
+    , gameState : GameState
     }
 
 
-init : ( Model, Cmd FrontendMsg )
-init =
-    ( { gameState = Unstarted }, sendToBackend ClientJoined )
+init : Url -> Key -> ( Model, Cmd FrontendMsg )
+init url key =
+    ( { key = key
+      , currentPage = pathToPage url
+      , gameState = Unstarted
+      }
+    , sendToBackend ClientJoined
+    )
 
 
 view : Model -> Html FrontendMsg
 view model =
-    Html.div []
-        [ gameView model
-        , Html.div [ onClick AdminRestartGame ] [ text "Restart the game" ]
-        , Html.div [ onClick AdminStartGame ] [ text "Start the game" ]
-        ]
+    case model.currentPage of
+        Home ->
+            Html.div []
+                [ gameView model
+                , Html.div [ onClick (OpenedPage Admin) ] [ text "x" ]
+                ]
+
+        Admin ->
+            Html.div []
+                [ Html.div [ onClick AdminRestartGame ] [ text "Restart the game" ]
+                , Html.div [ onClick AdminStartGame ] [ text "Start the game" ]
+                , Html.div [ onClick AdminEndRound ] [ text "End the round" ]
+                ]
 
 
 gameView model =
@@ -146,6 +164,24 @@ gameView model =
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
+        OpenedPage page ->
+            ( { model | currentPage = page }
+            , Nav.pushUrl model.key (pageToPath page)
+            )
+
+        UrlClicked urlRequest ->
+            case urlRequest of
+                Internal url ->
+                    ( { model | currentPage = pathToPage url }
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
+
+                External url ->
+                    ( model, Nav.load url )
+
+        UrlChanged url ->
+            ( { model | currentPage = pathToPage url }, scrollPageToTop )
+
         ChoiceMade choice ->
             ( { model | gameState = Active (Just choice) }, sendToBackend (ClientChoiceMade choice) )
 
@@ -154,6 +190,9 @@ update msg model =
 
         AdminStartGame ->
             ( model, sendToBackend ClientAdminStartGame )
+
+        AdminEndRound ->
+            ( model, sendToBackend ClientAdminEndRound )
 
         FNoop ->
             ( model, Cmd.none )
@@ -177,3 +216,7 @@ sendToBackend msg =
 sendToBackendWrapper : Milliseconds -> (Result WsError () -> Msg.FrontendMsg) -> Msg.ToBackend -> Cmd Msg.FrontendMsg
 sendToBackendWrapper =
     Lamdera.Frontend.sendToBackend
+
+
+scrollPageToTop =
+    Task.perform (\_ -> FNoop) (Browser.Dom.setViewport 0 0)
