@@ -48,6 +48,7 @@ type alias Model =
     { key : Key
     , currentPage : Page
     , gameState : GameState
+    , roundNumber : Int
     }
 
 
@@ -56,6 +57,7 @@ init url key =
     ( { key = key
       , currentPage = pathToPage url
       , gameState = Unstarted
+      , roundNumber = 1
       }
     , sendToBackend ClientJoined
     )
@@ -201,8 +203,8 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        Verdict gameState ->
-            ( { model | gameState = gameState }, Cmd.none )
+        PlayerGameStatus status ->
+            ( { model | gameState = status.gameState, roundNumber = status.roundNumber }, Cmd.none )
 
         RestartGame ->
             ( { model | gameState = Unstarted }, Cmd.none )

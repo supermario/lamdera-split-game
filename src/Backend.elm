@@ -79,16 +79,22 @@ updateFromFrontend clientId msg model =
         ClientAdminRestartGame ->
             let
                 newModel =
-                    { model | players = Dict.map (\k v -> newPlayerState) model.players }
+                    { model
+                        | players = Dict.map (\k v -> newPlayerState) model.players
+                        , roundNumber = 1
+                    }
             in
-            ( newModel, sendGameStates newModel.players )
+            ( newModel, sendGameStates newModel )
 
         ClientAdminStartGame ->
             let
                 newModel =
-                    { model | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players }
+                    { model
+                        | players = Dict.map (\k v -> { gameState = Active Nothing }) model.players
+                        , roundNumber = 1
+                    }
             in
-            ( newModel, sendGameStates newModel.players )
+            ( newModel, sendGameStates newModel )
 
         ClientAdminEndRound ->
             let
@@ -129,8 +135,7 @@ updateFromFrontend clientId msg model =
                                             case player.gameState of
                                                 Active (Just choice) ->
                                                     if choice /= choiceFromString highestSeenChoice then
-                                                        { gameState = DroppedOut 123 }
-                                                        -- @TODO fix me with round numbers
+                                                        { gameState = DroppedOut model.roundNumber }
 
                                                     else
                                                         -- User made it through – reset their color
@@ -145,14 +150,17 @@ updateFromFrontend clientId msg model =
                         Nothing ->
                             -- @TODO what does this mean? A draw? What do we do about it?
                             model
+
+                newNewModel =
+                    { newModel | roundNumber = model.roundNumber + 1 }
             in
-            ( model, Cmd.none )
+            ( newNewModel, sendGameStates newNewModel )
 
 
-sendGameStates players =
-    players
+sendGameStates model =
+    model.players
         |> Dict.toList
-        |> List.map (\( clientId, player ) -> sendToFrontend clientId (Verdict player.gameState))
+        |> List.map (\( clientId, player ) -> sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber }))
         |> Cmd.batch
 
 
