@@ -137,9 +137,13 @@ updateFromFrontend clientId msg model =
                                                     if choice /= choiceFromString highestSeenChoice then
                                                         { gameState = DroppedOut model.roundNumber }
 
-                                                    else
+                                                    else if groupedDictCount /= 1 then
                                                         -- User made it through – reset their color
                                                         { gameState = Active Nothing }
+
+                                                    else
+                                                        -- This user is the last man standing!
+                                                        { gameState = Winner }
 
                                                 _ ->
                                                     player

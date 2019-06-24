@@ -97,7 +97,8 @@ gameView model =
             case mChoice of
                 Nothing ->
                     Html.div []
-                        [ Html.div
+                        [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
+                        , Html.div
                             [ style "width" "400px"
                             , style "height" "200px"
                             , style "position" "relative"
@@ -117,7 +118,8 @@ gameView model =
 
                 Just choice ->
                     Html.div []
-                        [ Html.div
+                        [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
+                        , Html.div
                             [ style "width" "400px"
                             , style "height" "200px"
                             , style "position" "relative"
@@ -143,13 +145,7 @@ gameView model =
 
         DroppedOut roundNumber ->
             Html.div []
-                [ Html.div
-                    [ style "width" "400px"
-                    , style "height" "200px"
-                    , style "position" "relative"
-                    , style "background-color" "#grey"
-                    ]
-                    [ Html.text <| "Oops, you're out! You made it to round " ++ String.fromInt roundNumber ]
+                [ Html.div [] [ Html.text <| "You're out! You made it to round " ++ String.fromInt roundNumber ]
                 ]
 
         MissedOut ->
