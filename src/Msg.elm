@@ -1,10 +1,5 @@
 module Msg exposing (BackendMsg(..), Choice(..), FrontendMsg(..), GameState(..), Player, RoundNumber, ToBackend(..), ToFrontend(..))
 
-import Dict exposing (..)
-import Json.Decode
-import Json.Encode
-import Lamdera.Types exposing (ClientId, WsError)
-
 
 type FrontendMsg
     = ChoiceMade Choice

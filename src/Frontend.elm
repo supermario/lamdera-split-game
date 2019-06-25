@@ -1,17 +1,11 @@
 module Frontend exposing (Model, app, subscriptions)
 
-import Browser.Dom as Dom
-import Browser.Events as Keyboard
-import Debug exposing (toString)
-import Dict exposing (..)
-import Html exposing (Html, input, text)
-import Html.Attributes exposing (autofocus, id, placeholder, style, type_, value)
-import Html.Events exposing (keyCode, on, onClick, onInput)
-import Json.Decode as Decode
+import Html exposing (Html, text)
+import Html.Attributes exposing (style)
+import Html.Events exposing (onClick)
 import Lamdera.Frontend
-import Lamdera.Types exposing (..)
-import Msg exposing (..)
-import Task
+import Lamdera.Types exposing (Milliseconds, WsError)
+import Msg exposing (Choice(..), FrontendMsg(..), GameState(..), ToBackend(..), ToFrontend(..))
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
