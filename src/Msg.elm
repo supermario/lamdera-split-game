@@ -33,7 +33,7 @@ type BackendMsg
 
 
 type ToFrontend
-    = PlayerGameStatus { gameState : GameState, roundNumber : Int }
+    = PlayerGameStatus { gameState : GameState, roundNumber : Int, playersTotal : Int, playersRunning : Int }
     | RestartGame
 
 

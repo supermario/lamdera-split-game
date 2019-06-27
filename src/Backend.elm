@@ -154,14 +154,48 @@ updateFromFrontend clientId msg model =
 
 
 sendGameStates model =
+    let
+        playersTotal =
+            Dict.size model.players
+
+        playersRunning =
+            model.players
+                |> Dict.filter
+                    (\k players ->
+                        case players.gameState of
+                            Active _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                |> Dict.size
+    in
     model.players
         |> Dict.toList
-        |> List.map (\( clientId, player ) -> sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber }))
+        |> List.map (\( clientId, player ) -> sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber, playersTotal = playersTotal, playersRunning = playersRunning }))
         |> Cmd.batch
 
 
 sendGameState clientId model player =
-    sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber })
+    let
+        playersTotal =
+            Dict.size model.players
+
+        playersRunning =
+            model.players
+                |> Dict.filter
+                    (\k players ->
+                        case players.gameState of
+                            Active _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                |> Dict.size
+    in
+    sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber, playersTotal = playersTotal, playersRunning = playersRunning })
 
 
 broadcast clients msg =

@@ -54,6 +54,8 @@ type alias Model =
     , currentPage : Page
     , gameState : GameState
     , roundNumber : Int
+    , playersTotal : Int
+    , playersRunning : Int
     }
 
 
@@ -63,10 +65,12 @@ init url key =
       , currentPage = pathToPage url
       , gameState = Unstarted
 
-      -- , gameState = Active (Just Red)
+      -- , gameState = Active Nothing
       -- , gameState = DroppedOut 12
       -- , gameState = Winner
       , roundNumber = 1
+      , playersTotal = 0
+      , playersRunning = 0
       }
     , sendToBackend ClientJoined
     )
@@ -100,15 +104,19 @@ gameView model =
     theme model <|
         [ case model.gameState of
             Unstarted ->
-                row [ centerX ]
-                    [ text "Game will start shortly!"
+                column [ width fill, spacing 20 ]
+                    [ paragraph [ Font.center, Font.size 20 ] [ text "Game will start shortly!" ]
+                    , paragraph [ Font.center ] [ text <| String.fromInt model.playersTotal ++ " players joined" ]
                     ]
 
             Active mChoice ->
                 case mChoice of
                     Nothing ->
                         column [ spacing 20, width fill ]
-                            [ column [ centerX ] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                            [ column [ Font.center, width fill ]
+                                [ paragraph [] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                                , paragraph [ Font.center ] [ text <| String.fromInt model.playersRunning ++ "/" ++ String.fromInt model.playersTotal ++ " players left" ]
+                                ]
                             , row [ width fill ]
                                 [ row
                                     [ Font.center
@@ -131,7 +139,10 @@ gameView model =
 
                     Just choice ->
                         column [ spacing 20, width fill ]
-                            [ column [ centerX ] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                            [ column [ Font.center, width fill ]
+                                [ paragraph [] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                                , paragraph [ Font.center ] [ text <| String.fromInt model.playersRunning ++ "/" ++ String.fromInt model.playersTotal ++ " players left" ]
+                                ]
                             , row [ width fill ]
                                 [ row
                                     [ Font.center
@@ -169,6 +180,10 @@ gameView model =
                         [ paragraph [ Font.size 80 ] [ text <| "😭" ]
                         , paragraph [ Font.size 25, Font.bold ] [ text <| "You're out!" ]
                         , paragraph [] [ text <| "You made it to round " ++ String.fromInt roundNumber ]
+                        , column [ padding 40, Font.center, width fill, spacing 10 ]
+                            [ paragraph [ Font.size 25, Font.bold ] [ text <| String.fromInt model.playersRunning ++ "/" ++ String.fromInt model.playersTotal ++ " players left" ]
+                            , paragraph [ Font.center ] [ text <| "Currently round " ++ String.fromInt model.roundNumber ]
+                            ]
                         ]
                     ]
 
@@ -235,7 +250,14 @@ updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         PlayerGameStatus status ->
-            ( { model | gameState = status.gameState, roundNumber = status.roundNumber }, Cmd.none )
+            ( { model
+                | gameState = status.gameState
+                , roundNumber = status.roundNumber
+                , playersTotal = status.playersTotal
+                , playersRunning = status.playersRunning
+              }
+            , Cmd.none
+            )
 
         RestartGame ->
             ( { model | gameState = Unstarted }, Cmd.none )
