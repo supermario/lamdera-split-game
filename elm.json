@@ -8,6 +8,7 @@
         "direct": {
             "Lamdera/codecs": "1.0.0",
             "Lamdera/core": "1.0.0",
+            "avh4/elm-color": "1.0.0",
             "elm/browser": "1.0.0",
             "elm/bytes": "1.0.8",
             "elm/core": "1.0.2",
@@ -17,10 +18,13 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.2.0",
             "mdgriffith/elm-ui": "1.1.0",
+            "noahzgordon/elm-color-extra": "1.0.2",
             "turboMaCk/any-set": "1.0.0"
         },
         "indirect": {
+            "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
+            "fredcy/elm-parseint": "2.0.1",
             "turboMaCk/any-dict": "1.0.1"
         }
     },

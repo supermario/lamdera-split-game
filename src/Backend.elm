@@ -134,7 +134,7 @@ updateFromFrontend clientId msg model =
                                         (\k player ->
                                             case player.gameState of
                                                 Active (Just choice) ->
-                                                    if choice /= choiceFromString highestSeenChoice then
+                                                    if choice == choiceFromString highestSeenChoice then
                                                         { gameState = DroppedOut model.roundNumber }
 
                                                     else if groupedDictCount /= 1 then

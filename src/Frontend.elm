@@ -6,7 +6,8 @@ import Browser.Events as Keyboard
 import Browser.Navigation as Nav exposing (Key)
 import Debug exposing (toString)
 import Dict exposing (..)
-import Html exposing (Html, input, text)
+import Element exposing (..)
+import Html exposing (Html, input)
 import Html.Attributes exposing (autofocus, id, placeholder, style, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Decode
@@ -15,6 +16,7 @@ import Lamdera.Types exposing (..)
 import Msg exposing (..)
 import Task
 import Url exposing (Url)
+import Widgets exposing (..)
 
 
 {-| Lamdera applications define 'app' instead of 'main'.
@@ -57,6 +59,8 @@ init url key =
     ( { key = key
       , currentPage = pathToPage url
       , gameState = Unstarted
+
+      -- , gameState = Active Nothing
       , roundNumber = 1
       }
     , sendToBackend ClientJoined
@@ -69,94 +73,98 @@ view model =
         Home ->
             Html.div []
                 [ gameView model
-                , Html.div [ onClick (OpenedPage Admin) ] [ text "x" ]
+                , Html.div [ onClick (OpenedPage Admin) ] [ Html.text "x" ]
                 ]
 
         Admin ->
             Html.div []
-                [ Html.div [ onClick AdminRestartGame ] [ text "Restart the game" ]
-                , Html.div [ onClick AdminStartGame ] [ text "Start the game" ]
-                , Html.div [ onClick AdminEndRound ] [ text "End the round" ]
+                [ Html.div [ onClick AdminRestartGame ] [ Html.text "Restart the game" ]
+                , Html.div [ onClick AdminStartGame ] [ Html.text "Start the game" ]
+                , Html.div [ onClick AdminEndRound ] [ Html.text "End the round" ]
                 ]
 
 
 gameView model =
-    case model.gameState of
-        Unstarted ->
-            Html.div []
-                [ Html.div
-                    [ style "width" "400px"
-                    , style "height" "200px"
-                    , style "position" "relative"
-                    , style "background-color" "grey"
+    theme model <|
+        [ case model.gameState of
+            Unstarted ->
+                row [ centerX ]
+                    [ text "Game will start shortly!"
                     ]
-                    [ Html.text "Game will start shortly!" ]
-                ]
 
-        Active mChoice ->
-            case mChoice of
-                Nothing ->
+            Active mChoice ->
+                case mChoice of
+                    Nothing ->
+                        column []
+                            [ column [ centerX ] [ text <| "This is round " ++ String.fromInt model.roundNumber ]
+                            , Element.html <|
+                                Html.div []
+                                    [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
+                                    , Html.div
+                                        [ style "width" "400px"
+                                        , style "height" "200px"
+                                        , style "position" "relative"
+                                        , style "background-color" "red"
+                                        , onClick (ChoiceMade Red)
+                                        ]
+                                        [ Html.text "Red" ]
+                                    , Html.div
+                                        [ style "width" "400px"
+                                        , style "height" "200px"
+                                        , style "position" "relative"
+                                        , style "background-color" "blue"
+                                        , onClick (ChoiceMade Blue)
+                                        ]
+                                        [ Html.text "Blue" ]
+                                    ]
+                            ]
+
+                    Just choice ->
+                        Element.html <|
+                            Html.div []
+                                [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
+                                , Html.div
+                                    [ style "width" "400px"
+                                    , style "height" "200px"
+                                    , style "position" "relative"
+                                    , if choice == Red then
+                                        style "background-color" "red"
+
+                                      else
+                                        style "background-color" "grey"
+                                    ]
+                                    [ Html.text "Red" ]
+                                , Html.div
+                                    [ style "width" "400px"
+                                    , style "height" "200px"
+                                    , style "position" "relative"
+                                    , if choice == Blue then
+                                        style "background-color" "blue"
+
+                                      else
+                                        style "background-color" "grey"
+                                    ]
+                                    [ Html.text "Blue" ]
+                                ]
+
+            DroppedOut roundNumber ->
+                Element.html <|
                     Html.div []
-                        [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
-                        , Html.div
-                            [ style "width" "400px"
-                            , style "height" "200px"
-                            , style "position" "relative"
-                            , style "background-color" "red"
-                            , onClick (ChoiceMade Red)
-                            ]
-                            [ Html.text "Red" ]
-                        , Html.div
-                            [ style "width" "400px"
-                            , style "height" "200px"
-                            , style "position" "relative"
-                            , style "background-color" "blue"
-                            , onClick (ChoiceMade Blue)
-                            ]
-                            [ Html.text "Blue" ]
+                        [ Html.div [] [ Html.text <| "You're out! You made it to round " ++ String.fromInt roundNumber ]
                         ]
 
-                Just choice ->
+            MissedOut ->
+                Element.html <|
                     Html.div []
-                        [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
-                        , Html.div
-                            [ style "width" "400px"
-                            , style "height" "200px"
-                            , style "position" "relative"
-                            , if choice == Red then
-                                style "background-color" "red"
-
-                              else
-                                style "background-color" "grey"
-                            ]
-                            [ Html.text "Red" ]
-                        , Html.div
-                            [ style "width" "400px"
-                            , style "height" "200px"
-                            , style "position" "relative"
-                            , if choice == Blue then
-                                style "background-color" "blue"
-
-                              else
-                                style "background-color" "grey"
-                            ]
-                            [ Html.text "Blue" ]
+                        [ Html.text "Oops, the game has already started! Please wait for the next one."
                         ]
 
-        DroppedOut roundNumber ->
-            Html.div []
-                [ Html.div [] [ Html.text <| "You're out! You made it to round " ++ String.fromInt roundNumber ]
-                ]
-
-        MissedOut ->
-            Html.div []
-                [ Html.text "Oops, the game has already started! Please wait for the next one."
-                ]
-
-        Winner ->
-            Html.div []
-                [ Html.text "You're the winner! 🎉 Wow!"
-                ]
+            Winner ->
+                Element.html <|
+                    Html.div []
+                        [ Html.text "You're the winner! 🎉 Wow!"
+                        ]
+        ]
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
