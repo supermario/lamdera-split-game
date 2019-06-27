@@ -1,4 +1,4 @@
-module Widgets exposing (blue, fromHex, padding_, red, theme, white)
+module Widgets exposing (blue, fromHex, grey, padding_, red, theme, white)
 
 import Color exposing (rgb)
 import Color.Convert exposing (hexToColor)
@@ -42,6 +42,10 @@ blue =
 
 red =
     fromHex "#ff634e"
+
+
+grey =
+    fromHex "#dddddd"
 
 
 fromHex : String -> Color

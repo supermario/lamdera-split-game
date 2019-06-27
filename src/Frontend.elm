@@ -7,9 +7,12 @@ import Browser.Navigation as Nav exposing (Key)
 import Debug exposing (toString)
 import Dict exposing (..)
 import Element exposing (..)
+import Element.Background as Background
+import Element.Events exposing (onClick)
+import Element.Font as Font
 import Html exposing (Html, input)
 import Html.Attributes exposing (autofocus, id, placeholder, style, type_, value)
-import Html.Events exposing (keyCode, on, onClick, onInput)
+import Html.Events exposing (keyCode, on, onInput)
 import Json.Decode as Decode
 import Lamdera.Frontend
 import Lamdera.Types exposing (..)
@@ -60,7 +63,9 @@ init url key =
       , currentPage = pathToPage url
       , gameState = Unstarted
 
-      -- , gameState = Active Nothing
+      -- , gameState = Active (Just Red)
+      -- , gameState = DroppedOut 12
+      -- , gameState = Winner
       , roundNumber = 1
       }
     , sendToBackend ClientJoined
@@ -73,15 +78,13 @@ view model =
         Home ->
             Html.div []
                 [ gameView model
-
-                -- , Html.div [ onClick (OpenedPage Admin) ] [ Html.text "x" ]
                 ]
 
         Admin ->
             Html.div []
-                [ Html.div [ onClick AdminRestartGame ] [ Html.text "Restart the game" ]
-                , Html.div [ onClick AdminStartGame ] [ Html.text "Start the game" ]
-                , Html.div [ onClick AdminEndRound ] [ Html.text "End the round" ]
+                [ Html.div [ Html.Events.onClick AdminRestartGame ] [ Html.text "Restart the game" ]
+                , Html.div [ Html.Events.onClick AdminStartGame ] [ Html.text "Start the game" ]
+                , Html.div [ Html.Events.onClick AdminEndRound ] [ Html.text "End the round" ]
                 ]
 
 
@@ -96,79 +99,90 @@ gameView model =
             Active mChoice ->
                 case mChoice of
                     Nothing ->
-                        column []
-                            [ column [ centerX ] [ text <| "This is round " ++ String.fromInt model.roundNumber ]
-
-                            -- , row []
-                            --     [ row [ fillPortion 1, Background.color red, height (px 200) ] [ text "Red" ]
-                            --     , row [ fillPortion 1, Background.color blue, height (px 200) ] [ text "Blue" ]
-                            --     ]
-                            , Element.html <|
-                                Html.div []
-                                    [ Html.div
-                                        [ style "width" "400px"
-                                        , style "height" "200px"
-                                        , style "position" "relative"
-                                        , style "background-color" "red"
-                                        , onClick (ChoiceMade Red)
-                                        ]
-                                        [ Html.text "Red" ]
-                                    , Html.div
-                                        [ style "width" "400px"
-                                        , style "height" "200px"
-                                        , style "position" "relative"
-                                        , style "background-color" "blue"
-                                        , onClick (ChoiceMade Blue)
-                                        ]
-                                        [ Html.text "Blue" ]
+                        column [ spacing 20, width fill ]
+                            [ column [ centerX ] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                            , row [ width fill ]
+                                [ row
+                                    [ Font.center
+                                    , height (px 200)
+                                    , width fill
+                                    , Background.color red
+                                    , onClick (ChoiceMade Red)
                                     ]
+                                    [ paragraph [] [ text "Red" ] ]
+                                , row
+                                    [ Font.center
+                                    , height (px 200)
+                                    , width fill
+                                    , Background.color blue
+                                    , onClick (ChoiceMade Blue)
+                                    ]
+                                    [ paragraph [] [ text "Blue" ] ]
+                                ]
                             ]
 
                     Just choice ->
-                        Element.html <|
-                            Html.div []
-                                [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
-                                , Html.div
-                                    [ style "width" "400px"
-                                    , style "height" "200px"
-                                    , style "position" "relative"
-                                    , if choice == Red then
-                                        style "background-color" "red"
+                        column [ spacing 20, width fill ]
+                            [ column [ centerX ] [ text <| "Round " ++ String.fromInt model.roundNumber ]
+                            , row [ width fill ]
+                                [ row
+                                    [ Font.center
+                                    , height (px 200)
+                                    , width fill
+                                    , Background.color
+                                        (if choice == Red then
+                                            red
 
-                                      else
-                                        style "background-color" "grey"
+                                         else
+                                            grey
+                                        )
                                     ]
-                                    [ Html.text "Red" ]
-                                , Html.div
-                                    [ style "width" "400px"
-                                    , style "height" "200px"
-                                    , style "position" "relative"
-                                    , if choice == Blue then
-                                        style "background-color" "blue"
+                                    [ paragraph [] [ text "Red" ] ]
+                                , row
+                                    [ Font.center
+                                    , height (px 200)
+                                    , width fill
+                                    , Background.color
+                                        (if choice == Blue then
+                                            blue
 
-                                      else
-                                        style "background-color" "grey"
+                                         else
+                                            grey
+                                        )
                                     ]
-                                    [ Html.text "Blue" ]
+                                    [ paragraph [] [ text "Blue" ] ]
                                 ]
+                            , paragraph [ Font.center, Font.size 18 ] [ text <| "Waiting for verdict..." ]
+                            ]
 
             DroppedOut roundNumber ->
-                Element.html <|
-                    Html.div []
-                        [ Html.div [] [ Html.text <| "You're out! You made it to round " ++ String.fromInt roundNumber ]
+                column [ spacing 20, width fill ]
+                    [ column [ centerX, Font.center, spacing 20 ]
+                        [ paragraph [ Font.size 80 ] [ text <| "😭" ]
+                        , paragraph [ Font.size 25, Font.bold ] [ text <| "You're out!" ]
+                        , paragraph [] [ text <| "You made it to round " ++ String.fromInt roundNumber ]
                         ]
+                    ]
 
             MissedOut ->
-                Element.html <|
-                    Html.div []
-                        [ Html.text "Oops, the game has already started! Please wait for the next one."
+                column [ spacing 20, width fill ]
+                    [ column [ centerX, Font.center, spacing 20 ]
+                        [ paragraph [ Font.size 80 ] [ text <| "😢" ]
+                        , paragraph [ Font.size 25, Font.bold ] [ text <| "Oops!" ]
+                        , paragraph [] [ text <| "The game has already started!" ]
+                        , paragraph [] [ text <| "Please wait for the next one." ]
                         ]
+                    ]
 
             Winner ->
-                Element.html <|
-                    Html.div []
-                        [ Html.text "You're the winner! 🎉 Wow!"
+                column [ spacing 20, width fill ]
+                    [ column [ centerX, Font.center, spacing 20 ]
+                        [ paragraph [ Font.size 80 ] [ text <| "🎉" ]
+                        , paragraph [ Font.size 25, Font.bold ] [ text <| "Winner!" ]
+                        , paragraph [] [ text <| "Wow! You did it!" ]
+                        , paragraph [] [ text <| "You are the most unique person at Elm Europe!" ]
                         ]
+                    ]
         ]
 
 
