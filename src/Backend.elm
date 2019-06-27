@@ -19,8 +19,8 @@ app =
         }
 
 
-newPlayerState : Player
-newPlayerState =
+initialPlayerState : Player
+initialPlayerState =
     { gameState = Unstarted
     }
 
@@ -46,17 +46,25 @@ update msg model =
 
 updateFromFrontend : ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend clientId msg model =
-    let
-        x =
-            Debug.log "backendModel" model
-    in
     case Debug.log "updateFromFrontend" msg of
         ClientJoined ->
+            let
+                gameState =
+                    if model.roundNumber > 0 then
+                        { gameState = MissedOut }
+
+                    else
+                        initialPlayerState
+            in
             ( { model
                 | clients = Set.insert clientId model.clients
-                , players = Dict.insert clientId newPlayerState model.players
+                , players = Dict.insert clientId gameState model.players
               }
-            , Cmd.none
+            , if model.roundNumber > 0 then
+                sendGameState clientId model gameState
+
+              else
+                Cmd.none
             )
 
         ClientChoiceMade choice ->
@@ -80,7 +88,7 @@ updateFromFrontend clientId msg model =
             let
                 newModel =
                     { model
-                        | players = Dict.map (\k v -> newPlayerState) model.players
+                        | players = Dict.map (\k v -> initialPlayerState) model.players
                         , roundNumber = 1
                     }
             in
@@ -98,62 +106,42 @@ updateFromFrontend clientId msg model =
 
         ClientAdminEndRound ->
             let
-                majority =
-                    Red
+                reds =
+                    Dict.filter (\k players -> players.gameState == Active (Just Red)) model.players
 
-                highestResult =
-                    model.players
-                        |> Dict.foldl
-                            (\k player dict ->
-                                case player.gameState of
-                                    Active (Just choice) ->
-                                        Dict.update (choiceToString choice)
-                                            (\mCount ->
-                                                case mCount of
-                                                    Just count ->
-                                                        Just <| count + 1
-
-                                                    Nothing ->
-                                                        Just 1
-                                            )
-                                            dict
-
-                                    _ ->
-                                        dict
-                            )
-                            Dict.empty
-                        |> Dict.toList
-                        |> List.maximumBy (\( attr, count ) -> count)
+                blues =
+                    Dict.filter (\k players -> players.gameState == Active (Just Blue)) model.players
 
                 newModel =
-                    case highestResult of
-                        Just ( highestSeenChoice, groupedDictCount ) ->
-                            { model
-                                | players =
-                                    Dict.map
-                                        (\k player ->
-                                            case player.gameState of
-                                                Active (Just choice) ->
-                                                    if choice == choiceFromString highestSeenChoice then
-                                                        { gameState = DroppedOut model.roundNumber }
+                    { model
+                        | players =
+                            Dict.map
+                                (\k player ->
+                                    case player.gameState of
+                                        Active (Just choice) ->
+                                            if choice == Red && Dict.size reds == 1 then
+                                                { gameState = Winner }
 
-                                                    else if groupedDictCount /= 1 then
-                                                        -- User made it through – reset their color
-                                                        { gameState = Active Nothing }
+                                            else if choice == Blue && Dict.size blues == 1 then
+                                                { gameState = Winner }
 
-                                                    else
-                                                        -- This user is the last man standing!
-                                                        { gameState = Winner }
+                                            else if choice == Red && (Dict.size reds > Dict.size blues) then
+                                                { gameState = DroppedOut model.roundNumber }
 
-                                                _ ->
-                                                    player
-                                        )
-                                        model.players
-                            }
+                                            else if choice == Blue && (Dict.size reds < Dict.size blues) then
+                                                { gameState = DroppedOut model.roundNumber }
 
-                        Nothing ->
-                            -- @TODO what does this mean? A draw? What do we do about it?
-                            model
+                                            else
+                                                { gameState = Active Nothing }
+
+                                        Active Nothing ->
+                                            { gameState = DroppedOut model.roundNumber }
+
+                                        _ ->
+                                            player
+                                )
+                                model.players
+                    }
 
                 newNewModel =
                     { newModel | roundNumber = model.roundNumber + 1 }
@@ -166,6 +154,10 @@ sendGameStates model =
         |> Dict.toList
         |> List.map (\( clientId, player ) -> sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber }))
         |> Cmd.batch
+
+
+sendGameState clientId model player =
+    sendToFrontend clientId (PlayerGameStatus { gameState = player.gameState, roundNumber = model.roundNumber })
 
 
 broadcast clients msg =
