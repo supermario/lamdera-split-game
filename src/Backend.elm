@@ -125,10 +125,10 @@ updateFromFrontend clientId msg model =
                                             else if choice == Blue && Dict.size blues == 1 then
                                                 { gameState = Winner }
 
-                                            else if choice == Red && (Dict.size reds > Dict.size blues) then
+                                            else if choice == Red && (Dict.size reds > Dict.size blues) && Dict.size blues /= 0 then
                                                 { gameState = DroppedOut model.roundNumber }
 
-                                            else if choice == Blue && (Dict.size reds < Dict.size blues) then
+                                            else if choice == Blue && (Dict.size reds < Dict.size blues) && Dict.size reds /= 0 then
                                                 { gameState = DroppedOut model.roundNumber }
 
                                             else
