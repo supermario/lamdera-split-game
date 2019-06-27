@@ -50,7 +50,7 @@ updateFromFrontend clientId msg model =
         ClientJoined ->
             let
                 gameState =
-                    if model.roundNumber > 0 then
+                    if model.roundNumber > 1 then
                         { gameState = MissedOut }
 
                     else
@@ -60,7 +60,7 @@ updateFromFrontend clientId msg model =
                 | clients = Set.insert clientId model.clients
                 , players = Dict.insert clientId gameState model.players
               }
-            , if model.roundNumber > 0 then
+            , if model.roundNumber > 1 then
                 sendGameState clientId model gameState
 
               else

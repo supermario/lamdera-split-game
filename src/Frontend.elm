@@ -73,7 +73,8 @@ view model =
         Home ->
             Html.div []
                 [ gameView model
-                , Html.div [ onClick (OpenedPage Admin) ] [ Html.text "x" ]
+
+                -- , Html.div [ onClick (OpenedPage Admin) ] [ Html.text "x" ]
                 ]
 
         Admin ->
@@ -97,10 +98,14 @@ gameView model =
                     Nothing ->
                         column []
                             [ column [ centerX ] [ text <| "This is round " ++ String.fromInt model.roundNumber ]
+
+                            -- , row []
+                            --     [ row [ fillPortion 1, Background.color red, height (px 200) ] [ text "Red" ]
+                            --     , row [ fillPortion 1, Background.color blue, height (px 200) ] [ text "Blue" ]
+                            --     ]
                             , Element.html <|
                                 Html.div []
-                                    [ Html.text <| "This is round " ++ String.fromInt model.roundNumber
-                                    , Html.div
+                                    [ Html.div
                                         [ style "width" "400px"
                                         , style "height" "200px"
                                         , style "position" "relative"
