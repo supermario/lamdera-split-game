@@ -81,10 +81,18 @@ view model =
                 ]
 
         Admin ->
-            Html.div []
-                [ Html.div [ Html.Events.onClick AdminRestartGame ] [ Html.text "Restart the game" ]
-                , Html.div [ Html.Events.onClick AdminStartGame ] [ Html.text "Start the game" ]
-                , Html.div [ Html.Events.onClick AdminEndRound ] [ Html.text "End the round" ]
+            theme model
+                [ column [ spacing 20 ]
+                    [ row
+                        [ Background.color grey, padding 20, onClick AdminRestartGame ]
+                        [ text "Restart the game" ]
+                    , row
+                        [ Background.color grey, padding 20, onClick AdminStartGame ]
+                        [ text "Start the game" ]
+                    , row
+                        [ Background.color grey, padding 20, onClick AdminEndRound ]
+                        [ text "End the round" ]
+                    ]
                 ]
 
 
