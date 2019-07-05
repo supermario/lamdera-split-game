@@ -39,8 +39,8 @@ app =
                 , body = [ view model ]
                 }
         , subscriptions = subscriptions
-        , onUrlChange = \_ -> FNoop
-        , onUrlRequest = \_ -> FNoop
+        , onUrlChange = UrlChanged
+        , onUrlRequest = UrlClicked
         }
 
 
