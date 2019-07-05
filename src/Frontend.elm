@@ -265,12 +265,7 @@ updateFromBackend msg model =
 
 sendToBackend : Msg.ToBackend -> Cmd Msg.FrontendMsg
 sendToBackend msg =
-    sendToBackendWrapper 1000 (\_ -> FNoop) msg
-
-
-sendToBackendWrapper : Milliseconds -> (Result WsError () -> Msg.FrontendMsg) -> Msg.ToBackend -> Cmd Msg.FrontendMsg
-sendToBackendWrapper =
-    Lamdera.Frontend.sendToBackend
+    Lamdera.Frontend.sendToBackend 1000 (\_ -> FNoop) msg
 
 
 scrollPageToTop =
